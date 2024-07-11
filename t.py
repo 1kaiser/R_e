@@ -52,7 +52,7 @@ def data_logging(queue, com_port, baud_rate, base_csv_file_path, running_flag):
                 writer.writerow(["Timestamp", "Temperature", "Humidity"])
         
         with serial.Serial(com_port, baud_rate, timeout=1) as ser:
-            print(f"Starting data logging to {csv_file_path}... Press Ctrl+C to stop.")
+            print(f"Starting data logging to {csv_file_path}... Press Ctrl+C to stop.", flush=True)
             running_flag.value = 1
             while True:
                 temperature, humidity = read_sensor_data(ser)
