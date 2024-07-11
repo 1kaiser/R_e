@@ -11,5 +11,5 @@ bash -c "$(wget -qO-  https://raw.githubusercontent.com/1kaiser/R_e/main/prepare
 
 ## 🧪 SHT4x_Trinkey 
 ```
-bash -c "$(wget -O t.py https://raw.githubusercontent.com/1kaiser/R_e/main/t.py && python t.py)"
+bash -c "wget -O t.py https://raw.githubusercontent.com/1kaiser/R_e/main/t.py && python t.py"
 ```
