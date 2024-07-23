@@ -13,3 +13,7 @@ bash -c "$(wget -qO-  https://raw.githubusercontent.com/1kaiser/R_e/main/prepare
 ```
 bash -c "wget -O t.py https://raw.githubusercontent.com/1kaiser/R_e/main/t.py && python t.py"
 ```
+## 📃 [tmux](https://github.com/tmux/tmux)
+```
+bash -c "sudo apt update && sudo apt install -y tmux && wget -O ~/.tmux.conf https://raw.githubusercontent.com/1kaiser/R_e/main/.tmux.conf && tmux"
+```
