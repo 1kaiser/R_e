@@ -51,7 +51,7 @@ METERING="centre"  # Metering mode: centre, spot, average
 libcamera-still --width 1536 --height 1024 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING -o \$FILE_NAME
 
 if [ -f \$FILE_NAME ]; then
-    sshpass -p \$PASSWORD scp \$FILE_NAME \$REMOTE_USER@\$REMOTE_HOST:\$REMOTE_PATH
+    sshpass -p \"$PASSWORD" scp \$FILE_NAME \$REMOTE_USER@\$REMOTE_HOST:\$REMOTE_PATH
     if [ \$? -eq 0 ]; then
         echo "\$TIMESTAMP - \$FILE_NAME" >> \$LOG_FILE
         rm \$FILE_NAME
