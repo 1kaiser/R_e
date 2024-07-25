@@ -46,9 +46,12 @@ SHUTTER=6000000 # (1 TO 6 SECONDS) X1000000
 GAIN=4.0  # Adjust this value to control the ISO, typically ranges from 1.0 to 16.0
 AWB="auto"  # Auto White Balance: auto, incandescent, tungsten, fluorescent, indoor, daylight, cloudy, custom
 METERING="centre"  # Metering mode: centre, spot, average
+FOCUS_MODE="manual" 
+XX=0
+
 
 # Capture the image with custom exposure settings
-libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING -o \$FILE_NAME
+libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --lens-position \$XX --autofocus-mode \$FOCUS_MODE -o \$FILE_NAME
 
 if [ -f \$FILE_NAME ]; then
     sshpass -p "\$PASSWORD" scp \$FILE_NAME \$REMOTE_USER@\$REMOTE_HOST:\$REMOTE_PATH
