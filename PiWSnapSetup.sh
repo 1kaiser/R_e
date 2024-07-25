@@ -71,5 +71,5 @@ download_snapsend() {
 }
 
 # Add the cron jobs
-(crontab -l 2>/dev/null; echo "@reboot bash -c 'download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD''") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * bash -c 'download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD''") | crontab -
+(crontab -l 2>/dev/null; echo "@reboot bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'; fi'") | crontab -
+(crontab -l 2>/dev/null; echo "*/5 * * * * bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'; fi'") | crontab -
