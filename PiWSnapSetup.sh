@@ -62,6 +62,14 @@ EOF
 # Make the main script executable
 chmod +x ~/SnapSend.sh
 
+# Function to download SnapSend.sh if it does not exist
+download_snapsend() {
+    if [ ! -f ~/SnapSend.sh ]; then
+        wget -O ~/SnapSend.sh https://raw.githubusercontent.com/$GITHUB_REPO/main/SnapSend.sh
+        chmod +x ~/SnapSend.sh
+    fi
+}
+
 # Add the cron jobs
-(crontab -l 2>/dev/null; echo "@reboot bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then wget -O ~/SnapSend.sh https://raw.githubusercontent.com/$GITHUB_REPO/main/SnapSend.sh && chmod +x ~/SnapSend.sh && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'; fi'") | crontab -
-(crontab -l 2>/dev/null; echo "*/5 * * * * bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then wget -O ~/SnapSend.sh https://raw.githubusercontent.com/$GITHUB_REPO/main/SnapSend.sh && chmod +x ~/SnapSend.sh && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'; fi'") | crontab -
+(crontab -l 2>/dev/null; echo "@reboot bash -c 'download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD''") | crontab -
+(crontab -l 2>/dev/null; echo "*/1 * * * * bash -c 'download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD''") | crontab -
