@@ -13,14 +13,8 @@ PASSWORD=$4
 GITHUB_REPO=$5
 
 # Install expect and sshpass if not already installed
-if ! command -v expect &> /dev/null; then
-    sudo apt-get update
-    sudo apt-get install -y expect
-fi
-
-if ! command -v sshpass &> /dev/null; then
-    sudo apt-get install -y sshpass
-fi
+sudo apt-get update
+sudo apt-get install -y expect sshpass
 
 # Create the main script
 cat <<EOF > ~/SnapSend.sh
@@ -62,14 +56,6 @@ EOF
 # Make the main script executable
 chmod +x ~/SnapSend.sh
 
-# Function to download SnapSend.sh if it does not exist
-download_snapsend() {
-    if [ ! -f ~/SnapSend.sh ]; then
-        wget -O ~/SnapSend.sh https://raw.githubusercontent.com/$GITHUB_REPO/main/SnapSend.sh
-        chmod +x ~/SnapSend.sh
-    fi
-}
-
-# Add the cron jobs
-(crontab -l 2>/dev/null; echo "@reboot bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD' ; fi'") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'; fi'") | crontab -
+# Add cron jobs to run after reboot and every minute
+(crontab -l 2>/dev/null; echo "@reboot ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'") | crontab -
+(crontab -l 2>/dev/null; echo "*/1 * * * * ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'") | crontab -
