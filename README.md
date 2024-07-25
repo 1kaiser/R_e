@@ -19,5 +19,5 @@ bash -c "sudo apt update && sudo apt install -y tmux && wget -O ~/.tmux.conf htt
 ```
 ## 📸 [Pi_Camera_Setup](https://www.raspberrypi.com/documentation/computers/camera_software.html)
 ```
-bash -c "wget -O ~/PiWSnapSetup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/PiWSnapSetup.sh && chmod +x ~/PiWSnapSetup.sh && ~/PiWSnapSetup.sh your_remote_user your_remote_host /path/to/destination 'your_password' yourusername/your-repo"
+bash -c "wget -O ~/SnapSetup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/SnapSetup.sh && chmod +x ~/SnapSetup.sh && ~/SnapSetup.sh your_remote_user your_remote_host /path/to/destination 'your_password' yourusername/your-repo"
 ```
