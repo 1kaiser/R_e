@@ -13,14 +13,12 @@ PASSWORD=$4
 GITHUB_REPO=$5
 
 # Install expect and sshpass if not already installed
-if ! command -v expect &> /dev/null
-then
+if ! command -v expect &> /dev/null; then
     sudo apt-get update
     sudo apt-get install -y expect
 fi
 
-if ! command -v sshpass &> /dev/null
-then
+if ! command -v sshpass &> /dev/null; then
     sudo apt-get install -y sshpass
 fi
 
@@ -49,7 +47,6 @@ METERING="centre"  # Metering mode: centre, spot, average
 FOCUS_MODE="manual" 
 XX=0
 
-
 # Capture the image with custom exposure settings
 libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --lens-position \$XX --autofocus-mode \$FOCUS_MODE -o \$FILE_NAME
 
@@ -74,5 +71,5 @@ download_snapsend() {
 }
 
 # Add the cron jobs
-(crontab -l 2>/dev/null; echo "@reboot bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'; fi'") | crontab -
-(crontab -l 2>/dev/null; echo "*/1 * * * * bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then download_snapsend && ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'; fi'") | crontab -
+(crontab -l 2>/dev/null; echo "@reboot bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then download_snapsend && ~/SnapSend.sh \"$REMOTE_USER\" \"$REMOTE_HOST\" \"$REMOTE_PATH\" \"$PASSWORD\"; fi'") | crontab -
+(crontab -l 2>/dev/null; echo "*/1 * * * * bash -c 'if ! pgrep -f SnapSend.sh > /dev/null; then download_snapsend && ~/SnapSend.sh \"$REMOTE_USER\" \"$REMOTE_HOST\" \"$REMOTE_PATH\" \"$PASSWORD\"; fi'") | crontab -
