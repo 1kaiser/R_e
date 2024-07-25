@@ -48,7 +48,7 @@ AWB="auto"  # Auto White Balance: auto, incandescent, tungsten, fluorescent, ind
 METERING="centre"  # Metering mode: centre, spot, average
 
 # Capture the image with custom exposure settings
-libcamera-still --width 1536 --height 1024 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING -o \$FILE_NAME
+libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING -o \$FILE_NAME
 
 if [ -f \$FILE_NAME ]; then
     sshpass -p "\$PASSWORD" scp \$FILE_NAME \$REMOTE_USER@\$REMOTE_HOST:\$REMOTE_PATH
