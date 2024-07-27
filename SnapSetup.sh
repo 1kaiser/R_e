@@ -32,7 +32,10 @@ PASSWORD=\$4
 
 # Define variables
 TIMESTAMP=\$(date +"%Y%m%d_%H%M%S")
-FILE_NAME="\$HOME/pi_zero_NoIR_\$TIMESTAMP.jpg"
+#FILE_NAME="\$HOME/NoIR_\$TIMESTAMP.jpg"
+FILE_NAME="\$HOME/NoIR_\$TIMESTAMP.dng"
+
+
 LOG_FILE="\$HOME/transmission_log.txt"
 SHUTTER=100000 # (1 TO 6 SECONDS) X1000000
 GAIN=1.0  # Adjust this value to control the ISO, typically ranges from 1.0 to 16.0
