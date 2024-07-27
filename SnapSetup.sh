@@ -46,6 +46,9 @@ XX=0
 
 # Capture the image with custom exposure settings
 #libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --lens-position \$XX --autofocus-mode \$FOCUS_MODE -o \$FILE_NAME
+# FOCUS_MODE="auto" 
+#libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode \$FOCUS_MODE -o \$FILE_NAME
+
 libcamera-still --raw --output \$FILE_NAME
 
 
