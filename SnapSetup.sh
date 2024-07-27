@@ -32,23 +32,28 @@ PASSWORD=\$4
 
 # Define variables
 TIMESTAMP=\$(date +"%Y%m%d_%H%M%S")
-#FILE_NAME="\$HOME/NoIR_\$TIMESTAMP.jpg"
-FILE_NAME="\$HOME/NoIR_\$TIMESTAMP.dng"
-
 
 LOG_FILE="\$HOME/transmission_log.txt"
-SHUTTER=100000 # (1 TO 6 SECONDS) X1000000
-GAIN=1.0  # Adjust this value to control the ISO, typically ranges from 1.0 to 16.0
+
 AWB="auto"  # Auto White Balance: auto, incandescent, tungsten, fluorescent, indoor, daylight, cloudy, custom
 METERING="centre"  # Metering mode: centre, spot, average
-FOCUS_MODE="manual" 
-XX=0
 
-# Capture the image with custom exposure settings
-#libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --lens-position \$XX --autofocus-mode \$FOCUS_MODE -o \$FILE_NAME
+# # Capture the image with custom exposure settings
+# SHUTTER=6000000 # (1 TO 6 SECONDS) X1000000
+# GAIN=16.0  # Adjust this value to control the ISO, typically ranges from 1.0 to 16.0
+# FOCUS_MODE="manual" 
+# XX=0
+# FILE_NAME="\$HOME/NoIR_\$TIMESTAMP.jpg"
+# libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --lens-position \$XX --autofocus-mode \$FOCUS_MODE -o \$FILE_NAME
+
+# SHUTTER=100000 # (1 TO 6 SECONDS) X1000000
+# GAIN=1.0  # Adjust this value to control the ISO, typically ranges from 1.0 to 16.0
 # FOCUS_MODE="auto" 
-#libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode \$FOCUS_MODE -o \$FILE_NAME
+# FILE_NAME="\$HOME/NoIR_\$TIMESTAMP.jpg"
+# libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode \$FOCUS_MODE -o \$FILE_NAME
 
+
+FILE_NAME="\$HOME/NoIR_\$TIMESTAMP.dng"
 libcamera-still --raw --output \$FILE_NAME
 
 
