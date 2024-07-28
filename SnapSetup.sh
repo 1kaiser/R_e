@@ -107,5 +107,4 @@ EOF
 chmod +x ~/SnapSend.sh
 
 # Add cron jobs to run after reboot and every minute
-(crontab -l 2>/dev/null; echo "@reboot ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'") | crontab -
-(crontab -l 2>/dev/null; echo "*/10 * * * * ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'") | crontab -
+(crontab -l 2>/dev/null | grep -v 'SnapSend.sh'; echo "*/10 * * * * ~/SnapSend.sh $REMOTE_USER $REMOTE_HOST $REMOTE_PATH '$PASSWORD'") | crontab -
