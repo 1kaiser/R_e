@@ -44,15 +44,17 @@ for SHUTTER in "\${SHUTTERS[@]}"; do
 
                 # Define variables
                 TIMESTAMP=\$(date +"%Y%m%d_%H%M%S")
-                FILE_NAME_HDR="\$HOME/pi_zero_NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}_HDR.jpg"
-                RAW_FILE_NAME_HDR="\$HOME/pi_zero_NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}_HDR.dng"
-                FILE_NAME="\$HOME/pi_zero_NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}.jpg"
-                RAW_FILE_NAME="\$HOME/pi_zero_NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}.dng"
+                FILE_NAME_HDR="\$HOME/NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}_HDR.jpg"
+                RAW_FILE_NAME_HDR="\$HOME/NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}_HDR.dng"
+                FILE_NAME="\$HOME/NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}.jpg"
+                RAW_FILE_NAME="\$HOME/NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}.dng"
                 LOG_FILE="\$HOME/transmission_log.txt"
 
                 # Capture the image with custom exposure settings (HDR)
                 libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode auto --hdr -o \$FILE_NAME_HDR --raw 1 \$RAW_FILE_NAME_HDR
-
+                # Delay for 3 seconds
+                sleep 3
+                
                 # Upload the HDR JPEG image
                 if [ -f \$FILE_NAME_HDR ]; then
                     sshpass -p "\$PASSWORD" scp \$FILE_NAME_HDR \$REMOTE_USER@\$REMOTE_HOST:\$REMOTE_PATH
@@ -73,7 +75,10 @@ for SHUTTER in "\${SHUTTERS[@]}"; do
 
                 # Capture the image with custom exposure settings (non-HDR)
                 libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode auto -o \$FILE_NAME --raw 1 \$RAW_FILE_NAME
+                # Delay for 3 seconds
+                sleep 3
 
+                
                 # Upload the non-HDR JPEG image
                 if [ -f \$FILE_NAME ]; then
                     sshpass -p "\$PASSWORD" scp \$FILE_NAME \$REMOTE_USER@\$REMOTE_HOST:\$REMOTE_PATH
