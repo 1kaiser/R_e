@@ -44,10 +44,10 @@ for SHUTTER in "\${SHUTTERS[@]}"; do
 
                 # Define variables
                 TIMESTAMP=\$(date +"%Y%m%d_%H%M%S")
-                FILE_NAME_HDR="\$HOME/NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}_HDR.jpg"
-                RAW_FILE_NAME_HDR="\$HOME/NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}_HDR.dng"
-                FILE_NAME="\$HOME/NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}.jpg"
-                RAW_FILE_NAME="\$HOME/NoIR_\$TIMESTAMP_shutter\${SHUTTER}_gain\${GAIN}_awb\${AWB}_metering\${METERING}.dng"
+                FILE_NAME_HDR="\$HOME/NoIR_HDR_\${TIMESTAMP}_s_\${SHUTTER}_g_\${GAIN}.jpg"
+                RAW_FILE_NAME_HDR="\$HOME/NoIR_HDR_\${TIMESTAMP}_s_\${SHUTTER}_g_\${GAIN}.dng"
+                FILE_NAME="\$HOME/NoIR_\${TIMESTAMP}_s_\${SHUTTER}_g_\${GAIN}.jpg"
+                RAW_FILE_NAME="\$HOME/NoIR_\${TIMESTAMP}_s_\${SHUTTER}_g_\${GAIN}.dng"
                 LOG_FILE="\$HOME/transmission_log.txt"
 
                 # Capture the image with custom exposure settings (HDR)
