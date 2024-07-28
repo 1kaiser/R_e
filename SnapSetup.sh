@@ -51,7 +51,7 @@ for SHUTTER in "\${SHUTTERS[@]}"; do
                 LOG_FILE="\$HOME/transmission_log.txt"
 
                 # Capture the image with custom exposure settings (HDR)
-                libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode auto --hdr -o \$FILE_NAME_HDR --raw 1 \$RAW_FILE_NAME_HDR
+                libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode auto --hdr -o \$FILE_NAME_HDR --raw 1
                 # Delay for 3 seconds
                 sleep 3
                 
@@ -74,7 +74,7 @@ for SHUTTER in "\${SHUTTERS[@]}"; do
                 fi
 
                 # Capture the image with custom exposure settings (non-HDR)
-                libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode auto -o \$FILE_NAME --raw 1 \$RAW_FILE_NAME
+                libcamera-still --width 0 --height 0 --shutter \$SHUTTER --gain \$GAIN --awb \$AWB --metering \$METERING --autofocus-mode auto -o \$FILE_NAME --raw 1
                 # Delay for 3 seconds
                 sleep 3
 
