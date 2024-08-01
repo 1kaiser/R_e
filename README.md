@@ -37,3 +37,9 @@ bash -c "sudo apt update && sudo apt install -y tmux && wget -O ~/.tmux.conf htt
 ```
 bash -c "wget -O ~/SnapSetup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/SnapSetup.sh && chmod +x ~/SnapSetup.sh && ~/SnapSetup.sh your_remote_user your_remote_host /path/to/destination 'your_password' yourusername/your-repo"
 ```
+
+
+## ☀️🛰️ [GOES_X_Setup](https://www.swpc.noaa.gov/products/goes-x-ray-flux)
+```
+bash -c "wget -O ~/GOES_X_setup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/GOES_X_setup.sh && chmod +x ~/GOES_X_setup.sh && ~/GOES_X_setup.sh /path/to/folder"
+```
