@@ -11,11 +11,11 @@ cd $PROJECT_DIR
 
 # Download Node.js installer
 echo "Downloading Node.js..."
-wget https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz
+wget -nc https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz
 
 # Download Google Chrome installer
 echo "Downloading Google Chrome..."
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+wget -nc https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
 # Initialize npm project
 echo "Initializing npm project..."
