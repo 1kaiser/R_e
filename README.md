@@ -43,3 +43,9 @@ bash -c "wget -O ~/SnapSetup.sh https://raw.githubusercontent.com/1kaiser/R_e/ma
 ```
 bash -c "wget -O ~/GOES_X_setup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/GOES_X_setup.sh && chmod +x ~/GOES_X_setup.sh && ~/GOES_X_setup.sh /path/to/folder"
 ```
+
+## ✨🖥️ spack 
+
+```
+bash -c "wget -O ~/setup_spack.sh https://raw.githubusercontent.com/1kaiser/R_e/main/setup_spack.sh && chmod +x ~/setup_spack.sh && ~/setup_spack.sh {myproject} {4} {~/spack} {~/new_install}"
+```
