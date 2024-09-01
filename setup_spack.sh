@@ -38,7 +38,7 @@ chmod +x "$INSTALL_DIR/setup_env.sh"
 echo "source $INSTALL_DIR/setup_env.sh" >> "$HOME/.bashrc"
 
 # Install packages with Spack
-spack install --add gcc@10.2.0 sshpass git wget htop miniconda3 miniforge3 tmux -j "$INSTALL_PROCESSES"
+spack install -j $INSTALL_PROCESSES --add gcc@10.2.0 sshpass git wget htop miniconda3 miniforge3 tmux 
 
 # Reactivate Spack environment
 spack env deactivate && spack env activate "$ENV_NAME"
