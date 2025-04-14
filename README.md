@@ -27,6 +27,20 @@ bash -c "wget -O ~/t_setup.sh https://raw.githubusercontent.com/1kaiser/R_e/main
 `bash -c "wget -O t.py https://raw.githubusercontent.com/1kaiser/R_e/main/t.py && python t.py"`
 
 
+```
+import serial, time
+
+with serial.Serial('/dev/ttyACM0', 115200, timeout=1) as ser:
+    print("Reading raw sensor data. Press Ctrl+C to exit.")
+    try:
+        while True:
+            line = ser.readline().decode(errors='replace').strip()
+            if line:
+                print(time.strftime("%Y%m%d%H%M%S"), line)
+    except KeyboardInterrupt:
+        print("Exiting...")
+```
+
 ## 📃 [tmux](https://github.com/tmux/tmux)
 ```
 bash -c "sudo apt update && sudo apt install -y tmux && wget -O ~/.tmux.conf https://raw.githubusercontent.com/1kaiser/R_e/main/.tmux.conf && tmux"
