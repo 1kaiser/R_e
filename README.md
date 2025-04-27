@@ -65,3 +65,9 @@ bash -c "wget -O ~/GOES_X_setup.sh https://raw.githubusercontent.com/1kaiser/R_e
 ```
 bash -c "wget -O ~/setup_spack.sh https://raw.githubusercontent.com/1kaiser/R_e/main/setup_spack.sh && chmod +x ~/setup_spack.sh && ~/setup_spack.sh {myproject} {4} {~/spack} {~/new_install}"
 ```
+
+## updating x13 flow
+
+```
+sudo taskset -c 0,1 dpkg --configure linux-image-amd64 
+```
