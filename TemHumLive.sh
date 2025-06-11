@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Live Time Series ASCII Plotter for Temperature and Humidity
-# Displays temperature and humidity on Y-axis, time on X-axis
+# Live Time Series ASCII Plotter (Functional/Stream-based approach)
+# Uses a single AWK process to "map" data to a plot grid
 # Press Ctrl+C to exit gracefully
 
 # Handle Ctrl+C gracefully
@@ -23,7 +23,6 @@ usage() {
     echo "  -r REFRESH    Refresh interval in seconds (default: 5)"
     echo ""
     echo "Expected CSV format: timestamp,temperature,humidity"
-    echo "Example: 2025-06-10 15:23:00,36.3,34.73"
     echo ""
     echo "Press Ctrl+C to exit live monitoring mode"
     exit 1
@@ -36,189 +35,129 @@ DATA_POINTS=60
 REFRESH_INTERVAL=5
 CSV_FILE=""
 
-# Parse command line arguments
+# Parse command line arguments (This part remains the same)
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -w|--width)
-            PLOT_WIDTH="$2"
-            shift 2
-            ;;
-        -h|--height)
-            PLOT_HEIGHT="$2"
-            shift 2
-            ;;
-        -n|--points)
-            DATA_POINTS="$2"
-            shift 2
-            ;;
-        -r|--refresh)
-            REFRESH_INTERVAL="$2"
-            shift 2
-            ;;
-        -*)
-            echo "Unknown option: $1"
-            usage
-            ;;
+        -w|--width) PLOT_WIDTH="$2"; shift 2 ;;
+        -h|--height) PLOT_HEIGHT="$2"; shift 2 ;;
+        -n|--points) DATA_POINTS="$2"; shift 2 ;;
+        -r|--refresh) REFRESH_INTERVAL="$2"; shift 2 ;;
+        -*) echo "Unknown option: $1"; usage ;;
         *)
-            if [[ -z "$CSV_FILE" ]]; then
-                CSV_FILE="$1"
-            else
-                echo "Error: Multiple files not supported"
-                usage
-            fi
+            if [[ -z "$CSV_FILE" ]]; then CSV_FILE="$1"; else echo "Error: Multiple files not supported"; usage; fi
             shift
             ;;
     esac
 done
 
 # Validate inputs
-if [[ -z "$CSV_FILE" ]]; then
-    echo "Error: No CSV file specified"
-    usage
-fi
+if [[ -z "$CSV_FILE" ]]; then echo "Error: No CSV file specified"; usage; fi
+if [[ ! -f "$CSV_FILE" ]]; then echo "Error: File '$CSV_FILE' not found"; exit 1; fi
 
-if [[ ! -f "$CSV_FILE" ]]; then
-    echo "Error: File '$CSV_FILE' not found"
-    exit 1
-fi
-
-# Function to extract and clean data
+# Function to extract and clean data (remains the same)
 extract_recent_data() {
     local temp_file="/tmp/plot_data_$$"
-    
-    # Remove Windows line endings and extract recent data
-    tail -n "$((DATA_POINTS + 10))" "$CSV_FILE" | \
-    sed 's/\r$//' | \
-    awk -F',' '
-    BEGIN { OFS="," }
-    {
-        # Skip header
-        if (NR == 1 && (tolower($1) ~ /timestamp/ || tolower($2) ~ /temperature/)) next
-        
-        # Clean fields
-        gsub(/^[ \t]+|[ \t]+$/, "", $1)
-        gsub(/^[ \t]+|[ \t]+$/, "", $2)
-        gsub(/^[ \t]+|[ \t]+$/, "", $3)
-        
-        # Validate numeric fields
-        if (NF >= 3 && $2 ~ /^-?[0-9]+\.?[0-9]*$/ && $3 ~ /^-?[0-9]+\.?[0-9]*$/) {
-            print $1, $2, $3
-        }
-    }' | tail -n "$DATA_POINTS" > "$temp_file"
-    
+    tail -n "$((DATA_POINTS + 10))" "$CSV_FILE" | sed 's/\r$//' | \
+    awk -F',' 'BEGIN {OFS=","} {if (NR == 1 && (tolower($1) ~ /timestamp/ || tolower($2) ~ /temperature/)) next; gsub(/^[ \t]+|[ \t]+$/, "", $1); gsub(/^[ \t]+|[ \t]+$/, "", $2); gsub(/^[ \t]+|[ \t]+$/, "", $3); if (NF >= 3 && $2 ~ /^-?[0-9]+\.?[0-9]*$/ && $3 ~ /^-?[0-9]+\.?[0-9]*$/) {print $1, $2, $3}}' | \
+    tail -n "$DATA_POINTS" > "$temp_file"
     echo "$temp_file"
 }
 
-# Function to draw time series plot
+# --- REFACTORED PLOTTING FUNCTION ---
+# This function now uses a single, powerful AWK command to perform all logic.
 draw_timeseries_plot() {
     local data_file="$1"
     
     if [[ ! -s "$data_file" ]]; then
-        echo "No data available"
-        return
+        echo "No data available"; return
     fi
     
-    # Read data into arrays
-    local timestamps=()
-    local temperatures=()
-    local humidities=()
+    # Read the first and last timestamp from the file for the header
+    local start_time=$(head -n 1 "$data_file" | cut -d',' -f1)
+    local end_time=$(tail -n 1 "$data_file" | cut -d',' -f1)
     
-    while IFS=',' read -r ts temp hum; do
-        timestamps+=("$ts")
-        temperatures+=("$temp")
-        humidities+=("$hum")
-    done < "$data_file"
-    
-    local data_count=${#temperatures[@]}
-    
-    if [[ $data_count -eq 0 ]]; then
-        echo "No valid data points found"
-        return
-    fi
-    
-    # Calculate ranges
-    local temp_min=$(printf '%s\n' "${temperatures[@]}" | sort -n | head -1)
-    local temp_max=$(printf '%s\n' "${temperatures[@]}" | sort -n | tail -1)
-    
-    # --- CHANGE 1: Set a fixed 0-100 range for humidity ---
-    local hum_min=0
-    local hum_max=100
-    
-    # Calculate range values
-    local temp_range=$(awk "BEGIN {print $temp_max - $temp_min}")
-    
-    # --- CHANGE 2: Set humidity range to a fixed value ---
-    local hum_range=100
-    
-    # Add padding to temperature range to avoid division by zero
-    if (( $(awk "BEGIN {print ($temp_range < 1)}") )); then
-        temp_range=1
-        temp_max=$(awk "BEGIN {print $temp_min + 1}")
-    fi
-    
-    # --- CHANGE 3: The old padding check for humidity is no longer needed ---
-    
-    # Clear screen and draw header
-    clear
-    echo "Live Temperature & Humidity Monitor - Press Ctrl+C to exit"
-    echo "==========================================================="
-    printf "Last Update: %s | Data Points: %d\n" "$(date '+%H:%M:%S')" "$data_count"
-    # --- CHANGE 4: Update header to show the fixed humidity range ---
-    printf "Temperature: %.1f°C - %.1f°C | Humidity: %d%% - %d%%\n" "$temp_min" "$temp_max" "$hum_min" "$hum_max"
-    echo ""
-    
-    # Draw Y-axis labels and plot area
-    for ((row = PLOT_HEIGHT - 1; row >= 0; row--)); do
-        # Calculate Y-axis values
-        local temp_val=$(awk "BEGIN {printf \"%.1f\", $temp_min + ($temp_range * $row / ($PLOT_HEIGHT - 1))}")
-        # The logic here remains the same, but now uses the fixed hum_min and hum_range
-        local hum_val=$(awk "BEGIN {printf \"%.0f\", $hum_min + ($hum_range * $row / ($PLOT_HEIGHT - 1))}")
+    # Pass all plotting logic to a single AWK process
+    awk -v width="$PLOT_WIDTH" -v height="$PLOT_HEIGHT" '
+    # BEGIN block: Runs once before processing data. Set up constants and initial values.
+    BEGIN {
+        FS = ","
+        temp_min = 9999
+        temp_max = -9999
+        hum_min = 0    # Fixed humidity range
+        hum_max = 100
+        hum_range = 100
+    }
+
+    # Main block: Runs for EVERY line of data. This is our "map" operation.
+    # We read data into AWK arrays and find the temperature range on the fly.
+    {
+        timestamps[NR] = $1
+        temperatures[NR] = $2
+        humidities[NR] = $3
+        if ($2 < temp_min) temp_min = $2
+        if ($2 > temp_max) temp_max = $2
+    }
+
+    # END block: Runs once after all data has been read.
+    # Here we build and print the entire plot.
+    END {
+        if (NR == 0) {
+            print "No valid data points found"
+            exit
+        }
+
+        # --- 1. Finalize ranges and initialize the plot grid ---
+        temp_range = temp_max - temp_min
+        if (temp_range < 1) temp_range = 1  # Avoid division by zero
         
-        # Print Y-axis labels
-        printf "%5.1f°C %3.0f%% |" "$temp_val" "$hum_val"
+        for (y = 0; y < height; y++) {
+            for (x = 0; x < width; x++) {
+                plot_grid[x, y] = " "
+            }
+        }
+
+        # --- 2. Populate the grid by "mapping" data points to coordinates ---
+        for (i = 1; i <= NR; i++) {
+            x = int((i - 1) * (width - 1) / (NR - 1))
+            if (NR == 1) x = int(width / 2); # Center a single point
+
+            y_temp = int((temperatures[i] - temp_min) * (height - 1) / temp_range)
+            y_hum = int((humidities[i] - hum_min) * (height - 1) / hum_range)
+
+            # Place characters, handling overlaps
+            if (y_temp >= 0 && y_temp < height) {
+                if (plot_grid[x, y_temp] == " ") plot_grid[x, y_temp] = "▲" # Temperature
+            }
+            if (y_hum >= 0 && y_hum < height) {
+                if (plot_grid[x, y_hum] == " ") plot_grid[x, y_hum] = "●" # Humidity
+                else if (plot_grid[x, y_hum] == "▲") plot_grid[x, y_hum] = "◆" # Overlap
+            }
+        }
+
+        # --- 3. Print the header, plot grid, and axes ---
+        printf "Temperature: %.1f°C - %.1f°C | Humidity: %d%% - %d%%\n\n", temp_min, temp_max, hum_min, hum_max
         
-        # Plot data points
-        # Using a simple loop for plotting. A more complex approach could handle scaling better.
-        for ((i = 0; i < data_count; i++)); do
-            # Calculate the plot column for the current data point
-            local plot_col=$(( i * PLOT_WIDTH / data_count ))
-            
-            # This logic only prints a character if the current column matches the scaled position.
-            # This is a simplified way to ensure one point per data entry on the x-axis.
-            if [[ $plot_col -ne $(( (i-1) * PLOT_WIDTH / data_count )) ]] || [[ $i -eq 0 ]]; then
-                local temp="${temperatures[$i]}"
-                local hum="${humidities[$i]}"
-                
-                # Calculate positions. The humidity calculation now correctly scales to the 0-100 range.
-                local temp_pos=$(awk "BEGIN {print int(($temp - $temp_min) * ($PLOT_HEIGHT - 1) / $temp_range)}")
-                local hum_pos=$(awk "BEGIN {print int(($hum - $hum_min) * ($PLOT_HEIGHT - 1) / $hum_range)}")
-                
-                # Determine character to display
-                local char=" "
-                if [[ $temp_pos -eq $row ]] && [[ $hum_pos -eq $row ]]; then
-                    char="◆"
-                elif [[ $temp_pos -eq $row ]]; then
-                    char="▲"
-                elif [[ $hum_pos -eq $row ]]; then
-                    char="●"
-                fi
-                printf "%s" "$char"
-            fi
-        done
-        
-        echo
-    done
-    
-    # Draw X-axis
-    printf "%14s+" ""
-    printf "%${PLOT_WIDTH}s\n" "" | tr ' ' '-'
-    
-    # Draw time labels
+        for (y = height - 1; y >= 0; y--) {
+            y_val_temp = temp_min + (temp_range * y / (height - 1))
+            y_val_hum = hum_min + (hum_range * y / (height - 1))
+            printf "%5.1f°C %3.0f%% |", y_val_temp, y_val_hum
+
+            for (x = 0; x < width; x++) {
+                printf "%s", plot_grid[x, y]
+            }
+            print ""
+        }
+
+        # Draw X-axis
+        printf "%14s+", ""
+        for (x=0; x<width; x++) printf "-";
+        print ""
+    }
+    ' "$data_file" # AWK reads the data file here
+
+    # Print time labels and legend from Bash (simpler this way)
     printf "%15s" ""
-    local start_time="${timestamps[0]:11:5}"
-    local end_time="${timestamps[-1]:11:5}"
-    printf "%s%*s\n" "$start_time" "$((PLOT_WIDTH - 5))" "$end_time"
-    
+    printf "%s%*s\n" "${start_time:11:5}" "$((PLOT_WIDTH - 5))" "${end_time:11:5}"
     echo
     echo "Legend: ▲ Temperature  ● Humidity  ◆ Both overlap"
     echo "Next refresh in $REFRESH_INTERVAL seconds..."
@@ -230,16 +169,16 @@ main() {
     tput civis  # Hide cursor
     
     while true; do
-        # Extract recent data
         local data_file=$(extract_recent_data)
         
-        # Draw the plot
+        clear
+        echo "Live Temperature & Humidity Monitor - Press Ctrl+C to exit"
+        echo "==========================================================="
+        printf "Last Update: %s | Data Points: %d\n" "$(date '+%H:%M:%S')" "$(wc -l < "$data_file")"
+        
         draw_timeseries_plot "$data_file"
         
-        # Cleanup temporary file
         rm -f "$data_file"
-        
-        # Wait for next refresh
         sleep "$REFRESH_INTERVAL"
     done
 }
