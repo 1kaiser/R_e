@@ -69,11 +69,16 @@ export COM_PORT="$COM_PORT"
 export BAUD_RATE="$BAUD_RATE"
 
 # Create and run Python script with UV
-cat << 'EOF' | uv run --python $ENV_NAME python3 -
+cat << 'EOF' | PYTHONIOENCODING=utf-8 uv run --python $ENV_NAME python3 -
 import serial
 import time
 import sys
 import os
+
+# Set UTF-8 encoding for output
+import locale
+import codecs
+sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
 
 # Get configuration from environment variables
 com_port = os.environ.get('COM_PORT', '/dev/ttyACM0')
@@ -106,24 +111,24 @@ def read_sensor_data(ser):
 
 def test_connection(ser):
     """Test if we can read any data from the device"""
-    print("🔍 Testing connection...")
+    print("[*] Testing connection...")
     start = time.time()
     while time.time() - start < 5:
         try:
             if ser.in_waiting > 0:
                 data = ser.readline().decode('utf-8', errors='ignore').strip()
                 if data:
-                    print("✅ Connection confirmed!")
+                    print("[+] Connection confirmed!")
                     return True
         except:
             pass
         time.sleep(0.1)
-    print("❌ No data received")
+    print("[-] No data received")
     return False
 
 def main():
     try:
-        print(f"🔌 Connecting to {com_port}...")
+        print(f"[*] Connecting to {com_port}...")
         
         # Open serial connection
         with serial.Serial(
@@ -135,18 +140,18 @@ def main():
             bytesize=serial.EIGHTBITS
         ) as ser:
             
-            print("✅ Connected!")
+            print("[+] Connected!")
             time.sleep(2)  # Device initialization time
             ser.flushInput()  # Clear buffer
             
             # Test connection
             if not test_connection(ser):
-                print("💡 Troubleshooting:")
-                print("   - Try different baud rates: 9600, 57600, 115200")
-                print("   - Check device power and connections")
+                print("[!] Troubleshooting:")
+                print("    - Try different baud rates: 9600, 57600, 115200")
+                print("    - Check device power and connections")
                 return
             
-            print("📊 Live readings:")
+            print("[*] Live readings:")
             print("-" * 50)
             
             reading_count = 0
@@ -160,28 +165,28 @@ def main():
                     timestamp = time.strftime("%H:%M:%S")
                     
                     if extra is not None:
-                        print(f"[{timestamp}] #{reading_count:03d} | {temp:6.2f}°C | {hum:6.2f}% | Conductivity: {extra:6.0f}")
+                        print(f"[{timestamp}] #{reading_count:03d} | {temp:6.2f}C | {hum:6.2f}% | Extra: {extra:6.0f}")
                     else:
-                        print(f"[{timestamp}] #{reading_count:03d} | {temp:6.2f}°C | {hum:6.2f}%")
+                        print(f"[{timestamp}] #{reading_count:03d} | {temp:6.2f}C | {hum:6.2f}%")
                 else:
                     consecutive_failures += 1
                     if consecutive_failures > 10:
-                        print("⚠️  Multiple parsing failures - check data format")
+                        print("[!] Multiple parsing failures - check data format")
                         consecutive_failures = 0  # Reset counter
                 
                 time.sleep(0.5)  # Read every 0.5 seconds
                 
     except serial.SerialException as e:
-        print(f"❌ Serial error: {e}")
-        print("💡 Try: sudo chmod 666 " + com_port)
+        print(f"[-] Serial error: {e}")
+        print(f"[!] Try: sudo chmod 666 {com_port}")
     except PermissionError:
-        print(f"❌ Permission denied accessing {com_port}")
-        print(f"💡 Run: sudo chmod 666 {com_port}")
+        print(f"[-] Permission denied accessing {com_port}")
+        print(f"[!] Run: sudo chmod 666 {com_port}")
     except KeyboardInterrupt:
-        print(f"\n📊 Total readings captured: {reading_count}")
-        print("👋 Goodbye!")
+        print(f"\n[*] Total readings captured: {reading_count}")
+        print("[*] Goodbye!")
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"[-] Unexpected error: {e}")
 
 if __name__ == "__main__":
     main()
