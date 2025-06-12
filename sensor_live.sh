@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# UV Environment Temperature & Humidity Sensor Reader
+# UV Environment Temperature & Humidity Sensor Reader (Fully Sandboxed)
 # Usage: ./sensor_reader.sh [COM_PORT] [BAUD_RATE]
 # Remote: curl -sL https://raw.githubusercontent.com/USER/REPO/main/sensor_reader.sh | bash -s [COM_PORT] [BAUD_RATE]
 # Example: curl -sL https://raw.githubusercontent.com/USER/REPO/main/sensor_reader.sh | bash -s /dev/ttyACM0 115200
 
 set -e
 
-# Configuration
+# Configuration (completely isolated)
 COM_PORT="${1:-/dev/ttyACM0}"
 BAUD_RATE="${2:-115200}"
 ENV_NAME="sensor_env_$(date +%s)"
 
-echo "🌡️  UV Sensor Reader (Remote Ready)"
+echo "🌡️  UV Sensor Reader (Fully Sandboxed)"
 echo "📍 COM Port: $COM_PORT"
 echo "⚡ Baud Rate: $BAUD_RATE"
 echo "🌐 Script: github.com/USERNAME/REPO/main/sensor_reader.sh"
@@ -46,9 +46,10 @@ fi
 echo "🚀 Creating UV environment: $ENV_NAME"
 uv venv $ENV_NAME --quiet
 
-echo "📦 Installing pyserial..."
+echo "📦 Installing pyserial in UV environment..."
 uv pip install --python $ENV_NAME pyserial --quiet
 
+echo "🔧 Configuring sandboxed environment..."
 echo "✅ Environment ready! Press Ctrl+C to stop"
 echo "=================================================="
 
@@ -64,25 +65,19 @@ cleanup() {
 # Set trap for cleanup
 trap cleanup EXIT INT TERM
 
-# Export variables for Python script
-export COM_PORT="$COM_PORT"
-export BAUD_RATE="$BAUD_RATE"
+# Create Python script with embedded configuration (no external dependencies)
+cat << EOF > "${ENV_NAME}/sensor_reader.py"
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-# Create and run Python script with UV
-cat << 'EOF' | PYTHONIOENCODING=utf-8 uv run --python $ENV_NAME python3 -
 import serial
 import time
 import sys
 import os
 
-# Set UTF-8 encoding for output
-import locale
-import codecs
-sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
-
-# Get configuration from environment variables
-com_port = os.environ.get('COM_PORT', '/dev/ttyACM0')
-baud_rate = int(os.environ.get('BAUD_RATE', '115200'))
+# Embedded configuration (passed from bash)
+COM_PORT = "${COM_PORT}"
+BAUD_RATE = ${BAUD_RATE}
 
 def read_sensor_data(ser):
     """Read and parse sensor data from serial port"""
@@ -111,47 +106,47 @@ def read_sensor_data(ser):
 
 def test_connection(ser):
     """Test if we can read any data from the device"""
-    print("[*] Testing connection...")
+    print("🔍 Testing connection...")
     start = time.time()
     while time.time() - start < 5:
         try:
             if ser.in_waiting > 0:
                 data = ser.readline().decode('utf-8', errors='ignore').strip()
                 if data:
-                    print("[+] Connection confirmed!")
+                    print("✅ Connection confirmed!")
                     return True
         except:
             pass
         time.sleep(0.1)
-    print("[-] No data received")
+    print("❌ No data received")
     return False
 
 def main():
     try:
-        print(f"[*] Connecting to {com_port}...")
+        print(f"🔌 Connecting to {COM_PORT}...")
         
         # Open serial connection
         with serial.Serial(
-            port=com_port, 
-            baudrate=baud_rate, 
+            port=COM_PORT, 
+            baudrate=BAUD_RATE, 
             timeout=2,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
             bytesize=serial.EIGHTBITS
         ) as ser:
             
-            print("[+] Connected!")
+            print("✅ Connected!")
             time.sleep(2)  # Device initialization time
             ser.flushInput()  # Clear buffer
             
             # Test connection
             if not test_connection(ser):
-                print("[!] Troubleshooting:")
-                print("    - Try different baud rates: 9600, 57600, 115200")
-                print("    - Check device power and connections")
+                print("💡 Troubleshooting:")
+                print("   - Try different baud rates: 9600, 57600, 115200")
+                print("   - Check device power and connections")
                 return
             
-            print("[*] Live readings:")
+            print("📊 Live readings:")
             print("-" * 50)
             
             reading_count = 0
@@ -165,29 +160,32 @@ def main():
                     timestamp = time.strftime("%H:%M:%S")
                     
                     if extra is not None:
-                        print(f"[{timestamp}] #{reading_count:03d} | {temp:6.2f}C | {hum:6.2f}% | Extra: {extra:6.0f}")
+                        print(f"[{timestamp}] #{reading_count:03d} | {temp:6.2f}°C | {hum:6.2f}% | Extra: {extra:6.0f}")
                     else:
-                        print(f"[{timestamp}] #{reading_count:03d} | {temp:6.2f}C | {hum:6.2f}%")
+                        print(f"[{timestamp}] #{reading_count:03d} | {temp:6.2f}°C | {hum:6.2f}%")
                 else:
                     consecutive_failures += 1
                     if consecutive_failures > 10:
-                        print("[!] Multiple parsing failures - check data format")
+                        print("⚠️  Multiple parsing failures - check data format")
                         consecutive_failures = 0  # Reset counter
                 
                 time.sleep(0.5)  # Read every 0.5 seconds
                 
     except serial.SerialException as e:
-        print(f"[-] Serial error: {e}")
-        print(f"[!] Try: sudo chmod 666 {com_port}")
+        print(f"❌ Serial error: {e}")
+        print(f"💡 Try: sudo chmod 666 {COM_PORT}")
     except PermissionError:
-        print(f"[-] Permission denied accessing {com_port}")
-        print(f"[!] Run: sudo chmod 666 {com_port}")
+        print(f"❌ Permission denied accessing {COM_PORT}")
+        print(f"💡 Run: sudo chmod 666 {COM_PORT}")
     except KeyboardInterrupt:
-        print(f"\n[*] Total readings captured: {reading_count}")
-        print("[*] Goodbye!")
+        print(f"\n📊 Total readings captured: {reading_count}")
+        print("👋 Goodbye!")
     except Exception as e:
-        print(f"[-] Unexpected error: {e}")
+        print(f"❌ Unexpected error: {e}")
 
 if __name__ == "__main__":
     main()
 EOF
+
+# Run the Python script inside UV environment with full UTF-8 support
+LC_ALL=C.UTF-8 LANG=C.UTF-8 PYTHONIOENCODING=utf-8 uv run --python $ENV_NAME python3 "${ENV_NAME}/sensor_reader.py"
