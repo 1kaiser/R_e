@@ -12,6 +12,10 @@ bash -c "$(wget -qO-  https://raw.githubusercontent.com/1kaiser/R_e/main/prepare
 ## 🧪 SHT4x_Trinkey 
 
 ```
+bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/sensor_live.sh)" sensor_reader /dev/ttyACM0 115200
+```
+
+```
 bash -c "wget -O ~/t_setup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/t_setup.sh && chmod +x ~/t_setup.sh && ~/t_setup.sh"
 ```
 `crontab -e`
