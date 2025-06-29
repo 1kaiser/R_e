@@ -126,7 +126,7 @@ async function FireLogin(userId, password) {
     try {
         // --- IMPORTANT: You must change this URL to your actual target login page ---
         console.log('Navigating...');
-        await page.goto('http://example.com', { waitUntil: 'networkidle0' });
+        await page.goto('http://www.gstatic.com/generate_204', { waitUntil: 'networkidle0' });
 
         console.log('Entering credentials...');
         // --- IMPORTANT: You must change these selectors to match your login page ---
