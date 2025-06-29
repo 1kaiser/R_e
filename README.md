@@ -3,8 +3,7 @@
 ## 🗝️ Network_Login
 
 ```
-wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login.sh
-chmod +x prepare_login.sh && ./prepare_login.sh local_ip username 'password' login_id login_password
+wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login.sh && chmod +x prepare_login.sh && ./prepare_login.sh local_ip username 'password' login_id login_password
 
 ```
 
