@@ -3,7 +3,9 @@
 ## 🗝️ Network_Login
 
 ```
-bash -c "$(wget -qO-  https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login.sh)"
+wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login.sh
+chmod +x prepare_login.sh && ./prepare_login.sh local_ip username 'password' login_id login_password
+
 ```
 
 ## 🧪 SHT4x_Trinkey 
