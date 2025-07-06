@@ -24,7 +24,7 @@ function usage {
     echo "Actions:"
     echo "  image       Take a single picture."
     echo "  video       Record a ${VIDEO_DURATION}-second video."
-    echo "  live        Start a live view (requires a display)."
+    echo "  live        Start a ${VIDEO_DURATION}-second live view with a progress bar."
     echo "Example: $0 video /dev/video0"
     exit 1
 }
@@ -94,8 +94,47 @@ case "$ACTION" in
     fi
     ;;
   live)
-    info "Starting live view... (Requires a graphical session)"
-    sudo -u "$ORIGINAL_USER" DISPLAY=:0 ffplay -f v4l2 -video_size "$RESOLUTION" -an -sn -window_title "Live View" -i "$VIDEO_DEVICE" &>/dev/null
+    info "Starting ${VIDEO_DURATION}s live view... (Requires a graphical session)"
+    # Launch ffplay in the background for a fixed duration using the -t flag.
+    # The window will close automatically after VIDEO_DURATION seconds.
+    sudo -u "$ORIGINAL_USER" DISPLAY=:0 ffplay -t "$VIDEO_DURATION" -f v4l2 -video_size "$RESOLUTION" -an -sn -window_title "Live View (${VIDEO_DURATION}s)" -i "$VIDEO_DEVICE" &> /dev/null &
+    FFPLAY_PID=$!
+
+    info "Progress bar running for ${VIDEO_DURATION}s. Close the 'Live View' window to exit early."
+    
+    # --- Progress Bar Logic ---
+    tput civis # Hide cursor
+    start_time=$(date +%s)
+    
+    # Loop as long as the ffplay process is running
+    while kill -0 "$FFPLAY_PID" &>/dev/null; do
+        current_time=$(date +%s)
+        elapsed=$((current_time - start_time))
+
+        # Ensure elapsed does not exceed duration in case of timing drift
+        if (( elapsed > VIDEO_DURATION )); then elapsed=$VIDEO_DURATION; fi
+        
+        percent=$(( (elapsed * 100) / VIDEO_DURATION ))
+        bar_width=40
+        filled_len=$(( (bar_width * percent) / 100 ))
+        
+        # Build the bar string
+        bar_filled=""
+        for ((i=0; i<$filled_len; i++)); do bar_filled+="="; done
+        bar_empty=""
+        for ((i=filled_len; i<bar_width; i++)); do bar_empty+=" "; done
+        
+        # Print the progress bar, using \r to overwrite the line
+        printf "\rProgress: [%s%s] %d%%" "$bar_filled" "$bar_empty" "$percent"
+        
+        sleep 0.2
+    done
+    
+    tput cnorm # Restore cursor
+    # Print a final, full progress bar
+    printf "\rProgress: [%s] 100%%\n" "$(printf "%-${bar_width}s" "" | tr ' ' '=')"
+    
+    wait "$FFPLAY_PID" 2>/dev/null # Clean up the process
     success "Live view session ended."
     ;;
   *)
