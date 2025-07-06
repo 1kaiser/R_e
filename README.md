@@ -9,7 +9,10 @@ Flash ☄️ execution/running
 ```
 bash -c "$(wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login.sh && chmod +x prepare_login.sh && ./prepare_login.sh local_ip username 'password' login_id login_password)"
 ```
-
+## 🌡️📹 temperature imager setup
+```
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ image /dev/video2 
+```
 ## 🧪 SHT4x_Trinkey 
 
 ```
