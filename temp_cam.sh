@@ -23,8 +23,8 @@ function usage {
     echo "Usage: $0 <action> <video_device>"
     echo "Actions:"
     echo "  image       Take a single picture."
-    echo "  video       Record a ${VIDEO_DURATION}-second video."
-    echo "  live        Start a ${VIDEO_DURATION}-second live view with a progress bar."
+    echo "  video       Record a ${VIDEO_DURATION}-second video with a progress bar."
+    echo "  live        Start a live view (requires a display)."
     echo "Example: $0 video /dev/video0"
     exit 1
 }
@@ -39,25 +39,18 @@ if [ -z "$ACTION" ] || [ -z "$VIDEO_DEVICE" ]; then
 fi
 
 # =============================================================================
-#  The rest of the script is largely the same, but without the interactive parts.
-#  We must ensure sudo elevation passes the arguments correctly.
+#  Root privilege and driver setup (no changes)
 # =============================================================================
 
 function ensure_root {
     if [[ $EUID -ne 0 ]]; then
         info "Root privileges are required. Re-running with sudo..."
-        # "$@" passes all original arguments to the new sudo instance
         sudo -- "$0" "$@"
         exit $?
     fi
 }
 
-# We only need to check dependencies and run modprobe, which requires root
 ensure_root "$@"
-
-# (OS detection and package management code would go here, but for simplicity
-# in this example, we'll assume packages are installed. The full version
-# from our previous step would fit right in.)
 
 step "Running setup tasks with root privileges"
 info "Reloading uvcvideo module with quirks=${REQUIRED_QUIRK_VALUE}..."
@@ -77,7 +70,7 @@ TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 case "$ACTION" in
   image)
     MEDIA_PATH="${MEDIA_DIR}/image_${TIMESTAMP}.jpg"
-    info "Capturing image..."
+    info "Capturing image... (This is usually instantaneous)"
     if sudo -u "$ORIGINAL_USER" fswebcam -d "$VIDEO_DEVICE" -r "$RESOLUTION" --no-banner "$MEDIA_PATH"; then
         success "Image saved to: ${MEDIA_PATH}"
     else
@@ -87,54 +80,53 @@ case "$ACTION" in
   video)
     MEDIA_PATH="${MEDIA_DIR}/video_${TIMESTAMP}.mp4"
     info "Recording ${VIDEO_DURATION}s video..."
-    if sudo -u "$ORIGINAL_USER" ffmpeg -y -f v4l2 -video_size "$RESOLUTION" -framerate "$VIDEO_FRAMERATE" -i "$VIDEO_DEVICE" -t "$VIDEO_DURATION" "$MEDIA_PATH" &>/dev/null; then
+    # Launch ffmpeg in the background
+    sudo -u "$ORIGINAL_USER" ffmpeg -y -f v4l2 -video_size "$RESOLUTION" -framerate "$VIDEO_FRAMERATE" -i "$VIDEO_DEVICE" -t "$VIDEO_DURATION" "$MEDIA_PATH" &>/dev/null &
+    FFMPEG_PID=$!
+
+    # --- NEW Progress Bar Logic ---
+    tput civis # Hide cursor
+    start_time=$(date +%s)
+    MAX_BAR_WIDTH=60 # The maximum number of '#' characters to display at 100%
+
+    while kill -0 "$FFMPEG_PID" &>/dev/null; do
+        current_time=$(date +%s)
+        elapsed=$((current_time - start_time))
+
+        # Clamp elapsed time to the max duration to avoid progress > 100%
+        if (( elapsed > VIDEO_DURATION )); then elapsed=$VIDEO_DURATION; fi
+        
+        percent=$(( (elapsed * 100) / VIDEO_DURATION ))
+        filled_len=$(( (MAX_BAR_WIDTH * percent) / 100 ))
+        
+        # Build the bar string with '#' characters
+        bar=""
+        for ((i=0; i<$filled_len; i++)); do bar+="#"; done
+        
+        # Print the bar using \r to return to the line start, and 'tput el' to clear the rest of the line
+        printf "\r%s$(tput el)" "$bar"
+        
+        # Break the loop if we are done, to avoid an extra sleep.
+        if (( elapsed >= VIDEO_DURATION )); then break; fi
+
+        sleep 0.2
+    done
+    
+    tput cnorm # Restore cursor
+    printf "\n" # Move to a new line after the progress bar is complete
+
+    # Wait for ffmpeg to finish and check its exit code
+    wait "$FFMPEG_PID"
+    if [ $? -eq 0 ]; then
         success "Video saved to: ${MEDIA_PATH}"
     else
         fail "Failed to record video."
     fi
     ;;
   live)
-    info "Starting ${VIDEO_DURATION}s live view... (Requires a graphical session)"
-    # Launch ffplay in the background for a fixed duration using the -t flag.
-    # The window will close automatically after VIDEO_DURATION seconds.
-    sudo -u "$ORIGINAL_USER" DISPLAY=:0 ffplay -t "$VIDEO_DURATION" -f v4l2 -video_size "$RESOLUTION" -an -sn -window_title "Live View (${VIDEO_DURATION}s)" -i "$VIDEO_DEVICE" &> /dev/null &
-    FFPLAY_PID=$!
-
-    info "Progress bar running for ${VIDEO_DURATION}s. Close the 'Live View' window to exit early."
-    
-    # --- Progress Bar Logic ---
-    tput civis # Hide cursor
-    start_time=$(date +%s)
-    
-    # Loop as long as the ffplay process is running
-    while kill -0 "$FFPLAY_PID" &>/dev/null; do
-        current_time=$(date +%s)
-        elapsed=$((current_time - start_time))
-
-        # Ensure elapsed does not exceed duration in case of timing drift
-        if (( elapsed > VIDEO_DURATION )); then elapsed=$VIDEO_DURATION; fi
-        
-        percent=$(( (elapsed * 100) / VIDEO_DURATION ))
-        bar_width=40
-        filled_len=$(( (bar_width * percent) / 100 ))
-        
-        # Build the bar string
-        bar_filled=""
-        for ((i=0; i<$filled_len; i++)); do bar_filled+="="; done
-        bar_empty=""
-        for ((i=filled_len; i<bar_width; i++)); do bar_empty+=" "; done
-        
-        # Print the progress bar, using \r to overwrite the line
-        printf "\rProgress: [%s%s] %d%%" "$bar_filled" "$bar_empty" "$percent"
-        
-        sleep 0.2
-    done
-    
-    tput cnorm # Restore cursor
-    # Print a final, full progress bar
-    printf "\rProgress: [%s] 100%%\n" "$(printf "%-${bar_width}s" "" | tr ' ' '=')"
-    
-    wait "$FFPLAY_PID" 2>/dev/null # Clean up the process
+    info "Starting live view... Close the window to exit. (Requires a graphical session)"
+    # Run ffplay in the foreground. Script will wait here until the user closes the window.
+    sudo -u "$ORIGINAL_USER" DISPLAY=:0 ffplay -f v4l2 -video_size "$RESOLUTION" -an -sn -window_title "Live View (Close window to exit)" -i "$VIDEO_DEVICE" &>/dev/null
     success "Live view session ended."
     ;;
   *)
