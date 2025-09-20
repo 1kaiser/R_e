@@ -38,7 +38,7 @@ chmod +x "$INSTALL_DIR/setup_env.sh"
 echo "source $INSTALL_DIR/setup_env.sh" >> "$HOME/.bashrc"
 
 # Install packages with Spack
-spack install -j $INSTALL_PROCESSES --add gcc@10.2.0 sshpass git wget htop miniconda3 miniforge3 tmux 
+spack install -j $INSTALL_PROCESSES --add gcc@10.2.0 sshpass git wget htop miniconda3 miniforge3 tmux
 
 # Reactivate Spack environment
 spack env deactivate && spack env activate "$ENV_NAME"
@@ -103,7 +103,27 @@ for env in "${!envs[@]}"; do
     mamba install -p "$INSTALL_DIR/.miniforge/envs/$env" -y ${envs[$env]}
 done
 
+# Install Jupyter kernels for each environment
+echo "Installing Jupyter kernels for each environment..."
+
+# Activate base environment first
+source "$INSTALL_DIR/setup_env.sh"
+
+# Single-line kernel installation for all environments
+for env in gis jupyter ds_tools num_python; do mamba activate "$INSTALL_DIR/.miniforge/envs/$env" && python -m ipykernel install --user --name=$env --display-name="Python ($env)" && mamba deactivate; done
+
 echo "Setup complete in $INSTALL_DIR!"
 echo "To use this environment, run: source $INSTALL_DIR/setup_env.sh"
 echo "This script has been added to your .bashrc and will run automatically in new shell sessions."
 echo "If you don't want this, you can comment out or remove the line in your .bashrc file."
+echo ""
+echo "Jupyter kernels have been installed for all environments:"
+echo "  - Python (gis)"
+echo "  - Python (jupyter)"
+echo "  - Python (ds_tools)"
+echo "  - Python (num_python)"
+echo ""
+echo "Single-line command for future kernel installations:"
+echo "for env in gis jupyter ds_tools num_python; do conda activate \$env && python -m ipykernel install --user --name=\$env --display-name=\"Python (\$env)\" && conda deactivate; done"
+echo ""
+echo "You can now use these kernels in Jupyter Lab/Notebook by selecting them from the kernel menu."
