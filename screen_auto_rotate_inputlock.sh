@@ -1,123 +1,103 @@
 #!/bin/bash
 
 # A script to auto-rotate the screen and input devices on a convertible laptop.
-#
-# INSTRUCTIONS:
-# 1. Save this script to a file, for example: ~/auto-rotate-input.sh
-# 2. Make it executable: chmod +x ~/auto-rotate-input.sh
-# 3. Find your primary display name by running the `xrandr` command.
-#    Look for the output that says "connected primary" (e.g., "eDP", "LVDS1").
-#    Update the DISPLAY_OUTPUT variable below if yours is different.
-# 4. Run the script with root privileges: sudo ~/auto-rotate-input.sh
+# This version dynamically finds device IDs from their names at launch and uses
+# robust parsing to handle duplicate device names and complex hardware like styluses
+# that register as multiple device types (pointer and keyboard).
 
 # --- Configuration ---
-# Set your primary display output here. This has been corrected for your system.
+# Define the unique names of the devices we need to control.
 DISPLAY_OUTPUT="eDP"
+TOUCHPAD_NAME="ELAN1201:00 04F3:3098 Touchpad"
+# The stylus hardware registers as two devices. We need the raw name to find the correct one.
+STYLUS_RAW_NAME="ELAN9008:00 04F3:2C82"
+KEYBOARD_POINTER_NAME="pointer:Asus Keyboard"
+KEYBOARD_RAW_NAME="Asus Keyboard"
 
-# Device IDs from `xinput list`.
-# It's better to disable all potential keyboards and pointers to be safe.
-TOUCHPAD_ID=16
-STYLUS_PEN_ID=19
-STYLUS_ERASER_ID=20
-KEYBOARD_POINTER_ID=10 # "Asus Keyboard" that acts as a pointer
-KEYBOARD_ID_1=11       # "Asus Keyboard"
-KEYBOARD_ID_2=18       # "Asus Keyboard"
+# --- Dynamic Device ID Fetching ---
+# Use xinput to find the current ID for each unique device.
+TOUCHPAD_ID=$(xinput list --id-only "$TOUCHPAD_NAME")
+KEYBOARD_POINTER_ID=$(xinput list --id-only "$KEYBOARD_POINTER_NAME")
+
+# For the stylus, find the one that is a "slave pointer".
+STYLUS_ID=$(xinput list | grep "$STYLUS_RAW_NAME" | grep "slave  pointer" | sed 's/.*id=\([0-9]*\).*/\1/')
+
+# For the keyboards, find the ones that are "slave keyboard".
+KEYBOARD_IDS=($(xinput list | grep "$KEYBOARD_RAW_NAME" | grep "slave  keyboard" | sed 's/.*id=\([0-9]*\).*/\1/'))
+
+# --- Sanity Check ---
+# Exit if any of the essential devices weren't found.
+if [ -z "$TOUCHPAD_ID" ] || [ -z "$STYLUS_ID" ] || [ -z "$KEYBOARD_POINTER_ID" ]; then
+    echo "Error: Could not find one or more required input devices (Touchpad, Stylus Pointer, or Keyboard Pointer). Exiting."
+    xinput list # Print list for debugging
+    exit 1
+fi
+if [ ${#KEYBOARD_IDS[@]} -eq 0 ]; then
+    echo "Error: Could not find any physical keyboard devices ('Asus Keyboard'). Exiting."
+    xinput list # Print list for debugging
+    exit 1
+fi
+
 
 # --- Rotation Logic ---
-
-# Function to apply transformations for "normal" orientation
 function rotate_normal() {
-    # Rotate the screen
     xrandr --output "$DISPLAY_OUTPUT" --rotate normal
-
-    # Set transformation matrix for pointer devices
     xinput set-prop "$TOUCHPAD_ID" 'Coordinate Transformation Matrix' 1 0 0 0 1 0 0 0 1
-    xinput set-prop "$STYLUS_PEN_ID" 'Coordinate Transformation Matrix' 1 0 0 0 1 0 0 0 1
-    xinput set-prop "$STYLUS_ERASER_ID" 'Coordinate Transformation Matrix' 1 0 0 0 1 0 0 0 1
-
-    # Enable keyboards and touchpad for laptop mode
+    xinput set-prop "$STYLUS_ID" 'Coordinate Transformation Matrix' 1 0 0 0 1 0 0 0 1
     xinput enable "$KEYBOARD_POINTER_ID"
-    xinput enable "$KEYBOARD_ID_1"
-    xinput enable "$KEYBOARD_ID_2"
     xinput enable "$TOUCHPAD_ID"
+    for id in "${KEYBOARD_IDS[@]}"; do xinput enable "$id"; done
 }
 
-# Function to apply transformations for "left-up" orientation
 function rotate_left() {
-    # Rotate the screen
     xrandr --output "$DISPLAY_OUTPUT" --rotate left
-
-    # Set transformation matrix for pointer devices
     xinput set-prop "$TOUCHPAD_ID" 'Coordinate Transformation Matrix' 0 -1 1 1 0 0 0 0 1
-    xinput set-prop "$STYLUS_PEN_ID" 'Coordinate Transformation Matrix' 0 -1 1 1 0 0 0 0 1
-    xinput set-prop "$STYLUS_ERASER_ID" 'Coordinate Transformation Matrix' 0 -1 1 1 0 0 0 0 1
-
-    # Disable physical keyboard and touchpad for tablet mode
+    xinput set-prop "$STYLUS_ID" 'Coordinate Transformation Matrix' 0 -1 1 1 0 0 0 0 1
     xinput disable "$KEYBOARD_POINTER_ID"
-    xinput disable "$KEYBOARD_ID_1"
-    xinput disable "$KEYBOARD_ID_2"
     xinput disable "$TOUCHPAD_ID"
+    for id in "${KEYBOARD_IDS[@]}"; do xinput disable "$id"; done
 }
 
-# Function to apply transformations for "right-up" orientation
 function rotate_right() {
-    # Rotate the screen
     xrandr --output "$DISPLAY_OUTPUT" --rotate right
-
-    # Set transformation matrix for pointer devices
     xinput set-prop "$TOUCHPAD_ID" 'Coordinate Transformation Matrix' 0 1 0 -1 0 1 0 0 1
-    xinput set-prop "$STYLUS_PEN_ID" 'Coordinate Transformation Matrix' 0 1 0 -1 0 1 0 0 1
-    xinput set-prop "$STYLUS_ERASER_ID" 'Coordinate Transformation Matrix' 0 1 0 -1 0 1 0 0 1
-
-    # Disable physical keyboard and touchpad for tablet mode
+    xinput set-prop "$STYLUS_ID" 'Coordinate Transformation Matrix' 0 1 0 -1 0 1 0 0 1
     xinput disable "$KEYBOARD_POINTER_ID"
-    xinput disable "$KEYBOARD_ID_1"
-    xinput disable "$KEYBOARD_ID_2"
     xinput disable "$TOUCHPAD_ID"
+    for id in "${KEYBOARD_IDS[@]}"; do xinput disable "$id"; done
 }
 
-# Function to apply transformations for "bottom-up" (inverted) orientation
 function rotate_inverted() {
-    # Rotate the screen
     xrandr --output "$DISPLAY_OUTPUT" --rotate inverted
-
-    # Set transformation matrix for pointer devices
     xinput set-prop "$TOUCHPAD_ID" 'Coordinate Transformation Matrix' -1 0 1 0 -1 1 0 0 1
-    xinput set-prop "$STYLUS_PEN_ID" 'Coordinate Transformation Matrix' -1 0 1 0 -1 1 0 0 1
-    xinput set-prop "$STYLUS_ERASER_ID" 'Coordinate Transformation Matrix' -1 0 1 0 -1 1 0 0 1
-
-    # Disable physical keyboard and touchpad for tablet mode
+    xinput set-prop "$STYLUS_ID" 'Coordinate Transformation Matrix' -1 0 1 0 -1 1 0 0 1
     xinput disable "$KEYBOARD_POINTER_ID"
-    xinput disable "$KEYBOARD_ID_1"
-    xinput disable "$KEYBOARD_ID_2"
     xinput disable "$TOUCHPAD_ID"
+    for id in "${KEYBOARD_IDS[@]}"; do xinput disable "$id"; done
 }
-
 
 # --- Main Loop ---
-# Monitor sensor changes and call the appropriate function.
 echo "Starting auto-rotation script. Press Ctrl+C to stop."
+echo "Found Touchpad ID: $TOUCHPAD_ID"
+echo "Found Stylus Pointer ID: $STYLUS_ID"
+echo "Found Keyboard Pointer ID: $KEYBOARD_POINTER_ID"
+echo "Found Physical Keyboard IDs: ${KEYBOARD_IDS[*]}"
 
-# Set initial orientation
 rotate_normal
 
 monitor-sensor | while read -r line; do
     case "$line" in
         *"Accelerometer orientation changed: normal"*)
             echo "Orientation: Normal"
-            rotate_normal
-            ;;
+            rotate_normal ;;
         *"Accelerometer orientation changed: left-up"*)
             echo "Orientation: Left-Up"
-            rotate_left
-            ;;
+            rotate_left ;;
         *"Accelerometer orientation changed: right-up"*)
             echo "Orientation: Right-Up"
-            rotate_right
-            ;;
+            rotate_right ;;
         *"Accelerometer orientation changed: bottom-up"*)
             echo "Orientation: Bottom-Up (Inverted)"
-            rotate_inverted
-            ;;
+            rotate_inverted ;;
     esac
 done
