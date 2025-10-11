@@ -5,6 +5,31 @@
 # robust parsing to handle duplicate device names and complex hardware like styluses
 # that register as multiple device types (pointer and keyboard).
 
+# use>>>>
+# mkdir -p ~/.config/systemd/user/
+# nano ~/.config/systemd/user/auto-rotate.service
+# [Unit]
+# Description=Auto-rotate screen and input script
+
+# [Service]
+# ExecStart=/usr/local/bin/screen_auto_rotate_inputlock.sh
+# Restart=always
+
+# [Install]
+# WantedBy=default.target
+# ```*_(Note: Make sure `ExecStart` points to the correct, full path of your script)_*
+
+# **4. Save and exit** the nano editor (`Ctrl+X`, `Y`, `Enter`).
+
+# **5. Enable and start the service:**
+# ```bash
+# # Reload systemd to make it aware of the new file
+# systemctl --user daemon-reload
+
+# # Enable the service to start automatically on every login
+# systemctl --user enable --now auto-rotate.service
+
+
 # --- Configuration ---
 # Define the unique names of the devices we need to control.
 DISPLAY_OUTPUT="eDP"
