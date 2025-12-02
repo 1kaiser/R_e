@@ -10,10 +10,13 @@ baud_rate = 115200  # Adjust this to the baud rate of your sensor
 base_csv_file_path = 'sensor_readings'  # Base path for the CSV file
 
 def find_next_file_name(base_path):
-    """Find the next available file name with a numeric suffix."""
+    """Find the next available file name with date and numeric suffix."""
+    # Get the current date in YYYY-MM-DD format
+    date_str = time.strftime("%Y-%m-%d") 
     index = 0
     while True:
-        file_path = f"{base_path}_{index}.csv"
+        # File will look like: sensor_readings_2023-10-27_0.csv
+        file_path = f"{base_path}_{date_str}_{index}.csv"
         if not os.path.exists(file_path):
             return file_path
         index += 1
