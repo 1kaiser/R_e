@@ -31,7 +31,7 @@ Ensure your SHT41 Trinkey is running its default code (or CircuitPython) which o
 
 ### Step 2: Install the "Driver" App
 Since Termux cannot open the USB port directly, use the highly reliable **Serial USB Terminal** app to act as the bridge.
-1.  Install **[Serial USB Terminal](https://play.google.com/store/apps/details?id=de.kai_morich.serial_usb_terminal)** (by Kai Morich) from the Google Play Store.
+1.  Install **[Serial USB Terminal](https://play.google.com/store/apps/details?id=de.kai_morich.serial_usb_terminal)** (by [Kai Morich](https://github.com/kai-morich/SimpleUsbTerminal)) from the Google Play Store.
 2.  Connect your Trinkey to the phone using a **USB OTG adapter**.
 3.  Open the app. It should detect the device (likely as a CDC/ACM device).
 4.  Tap the **Connect** button (plug icon) to ensure data is streaming. You should see lines of text appearing (e.g., `123456, 24.50, 48.10, 800`).
