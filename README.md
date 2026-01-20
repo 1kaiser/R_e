@@ -111,14 +111,17 @@ Now you can run the script you provided, pointing it at the clean data file.
 
 </details>
 
+
+#### live data viewing on linux system >>
 ```
 bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/sensor_live.sh)" sensor_reader /dev/ttyACM0 115200
 ```
 
+#### recording data on linux system >>
 ```
 bash -c "wget -O ~/t_setup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/t_setup.sh && chmod +x ~/t_setup.sh && ~/t_setup.sh"
 ```
-`crontab -e`
+#### for auto startup step after reboot use command >>> `crontab -e`
 
 ```
 # Run script every 5 minutes
