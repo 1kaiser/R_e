@@ -2,15 +2,15 @@
 
 ## 🗝️ Network_Login
 Graphical 🌪️ running
-```
+```bash
 wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login.sh && chmod +x prepare_login.sh && ./prepare_login.sh local_ip username 'password' login_id login_password
 ```
 Flash ☄️ execution/running
-```
+```bash
 bash -c "$(wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login.sh && chmod +x prepare_login.sh && ./prepare_login.sh local_ip username 'password' login_id login_password)"
 ```
 ## 🌡️📹 temperature imager setup
-```
+```bash
 sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ image /dev/video2 
 ```
 ## 🧪 SHT4x_Trinkey 
@@ -113,17 +113,27 @@ Now you can run the script you provided, pointing it at the clean data file.
 
 
 #### live data viewing on linux system >>
-```
+```bash
 bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/sensor_live.sh)" sensor_reader /dev/ttyACM0 115200
 ```
 
 #### recording data on linux system >>
-```
+```bash
 bash -c "wget -O ~/t_setup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/t_setup.sh && chmod +x ~/t_setup.sh && ~/t_setup.sh"
 ```
 #### for auto startup step after reboot use command >>> `crontab -e`
 
-```
+```bash
+#######################################################
+###        * * * * *  /path/to/command
+###        ┬ ┬ ┬ ┬ ┬
+###        │ │ │ │ └─ Day of the Week (0-6, Sunday=0 or 7)
+###        │ │ │ └─── Month (1-12)
+###        │ │ └───── Day of the Month (1-31)
+###        │ └─────── Hour (0-23)
+###        └───────── Minute (0-59)
+#######################################################
+
 # Run script every 5 minutes
 */5 * * * * ~/t_setup.sh
 
@@ -134,7 +144,7 @@ bash -c "wget -O ~/t_setup.sh https://raw.githubusercontent.com/1kaiser/R_e/main
 `bash -c "wget -O t.py https://raw.githubusercontent.com/1kaiser/R_e/main/t.py && python t.py"`
 
 
-```
+```bash
 python <<EOF
 import serial, time
 
@@ -151,30 +161,30 @@ EOF
 ```
 
 ## 📃 [tmux](https://github.com/tmux/tmux)
-```
+```bash
 bash -c "sudo apt update && sudo apt install -y tmux && wget -O ~/.tmux.conf https://raw.githubusercontent.com/1kaiser/R_e/main/.tmux.conf && tmux"
 ```
 
 
 ## 📸 [Pi_Camera_Setup](https://www.raspberrypi.com/documentation/computers/camera_software.html)
-```
+```bash
 bash -c "wget -O ~/SnapSetup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/SnapSetup.sh && chmod +x ~/SnapSetup.sh && ~/SnapSetup.sh your_remote_user your_remote_host /path/to/destination 'your_password' yourusername/your-repo"
 ```
 
 
 ## ☀️🛰️ [GOES_X_Setup](https://www.swpc.noaa.gov/products/goes-x-ray-flux)
-```
+```bash
 bash -c "wget -O ~/GOES_X_setup.sh https://raw.githubusercontent.com/1kaiser/R_e/main/GOES_X_setup.sh && chmod +x ~/GOES_X_setup.sh && ~/GOES_X_setup.sh /path/to/folder"
 ```
 
 ## ✨🖥️ spack 
 
-```
+```bash
 bash -c "wget -O ~/setup_spack.sh https://raw.githubusercontent.com/1kaiser/R_e/main/setup_spack.sh && chmod +x ~/setup_spack.sh && ~/setup_spack.sh {myproject} {4} {~/spack} {~/new_install}"
 ```
 
 ## 🪩 x13 flow
 
-```
+```bash
 sudo taskset -c 0,1 dpkg --configure linux-image-amd64 
 ```
