@@ -11,7 +11,17 @@ bash -c "$(wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login
 ```
 ## 🌡️📹 temperature imager setup
 ```bash
-sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ image /dev/video2 
+# Auto-detect HIK camera, capture image
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ image
+
+# Capture image on specific device
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ image /dev/video0
+
+# Record a 10-second video
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ video /dev/video0
+
+# Live view (requires graphical session)
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ live /dev/video0
 ```
 ## 🧪 SHT4x_Trinkey 
 <details>
