@@ -11,17 +11,24 @@ bash -c "$(wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login
 ```
 ## 🌡️📹 temperature imager setup
 ```bash
-# Auto-detect HIK camera, capture image
-sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ image
+# 📸 OPTION 1: Standalone Image Capture to CLI
+# Format: ...temp_cam.sh)" _ image [chafa_symbols] [device_path]
 
-# Capture image on specific device
-sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ image /dev/video0
+# Auto-detect camera and render single frame using solid square block matrices
+sudo bash -c "$(wget -qO- [https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh](https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh))" _ image block
 
-# Record a 10-second video
-sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ video /dev/video0
+# Target a specific device node path using high-density quadrant symbols
+sudo bash -c "$(wget -qO- [https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh](https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh))" _ image quad /dev/video0
 
-# Live view (requires graphical session)
-sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh)" _ live /dev/video0
+
+# 📡 OPTION 2: Real-Time Terminal Monitor Stream Loops
+# Format: ...temp_cam.sh)" _ loop [interval_seconds] [chafa_symbols] [device_path]
+
+# Stream live updates every 2 seconds via auto-detected hardware node
+sudo bash -c "$(wget -qO- [https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh](https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh))" _ loop 2 quad
+
+# Ultra-fast structural telemetry tracking refresh every 0.5 seconds with all symbols active
+sudo bash -c "$(wget -qO- [https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh](https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh))" _ loop 0.5 all /dev/video0
 ```
 ## 🧪 SHT4x_Trinkey 
 <details>
