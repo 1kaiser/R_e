@@ -35,7 +35,7 @@ verify_driver_state() {
     if [ -f /sys/module/uvcvideo/parameters/quirks ]; then
         local live_quirks=$(cat /sys/module/uvcvideo/parameters/quirks)
         if [ "$live_quirks" -eq 2 ]; then
-            return 0 # Subsystem is already patched and stable; skip reload routines
+            return 0 # Subsystem already patched; skip dynamic reloads
         fi
     fi
     
@@ -74,8 +74,9 @@ resolve_hardware_node() {
 capture_and_render_frame() {
     local dev="$1"
     local sym="$2"
+    local ts_flag="$3"
 
-    # Pull uncompressed 256x196 byte payload structure directly off internal microbolometer registers
+    # Pull uncompressed byte payload directly off microbolometer registers
     v4l2-ctl -d "$dev" --set-fmt-video=width=256,height=196,pixelformat=YUYV --stream-mmap --stream-to="$RAW_BIN" --stream-count=1 &>/dev/null
     
     if [ ! -s "$RAW_BIN" ]; then
@@ -92,20 +93,13 @@ from PIL import Image
 try:
     if not os.path.exists('$RAW_BIN'): sys.exit(1)
     
-    # Unpack binary payload data elements straight into 16-bit unsigned array space
     raw_stream = np.fromfile('$RAW_BIN', dtype=np.uint16)
     matrix = raw_stream.reshape((196, 256))
-    
-    # Strip away bottom physical alignment metadata lines to process the core thermal canvas rows (192)
     thermal_pixels = matrix[:192, :].astype(float)
     
     p_min, p_max = thermal_pixels.min(), thermal_pixels.max()
-    if p_max > p_min:
-        norm = (thermal_pixels - p_min) / (p_max - p_min)
-    else:
-        norm = np.zeros_like(thermal_pixels)
+    norm = (thermal_pixels - p_min) / (p_max - p_min) if p_max > p_min else np.zeros_like(thermal_pixels)
         
-    # Synthesize false-color RGB channels via standard high-contrast Ironbow/Inferno scale mapping
     R = np.clip(1.5 * norm, 0.0, 1.0)
     G = np.clip(2.0 * norm - 0.5, 0.0, 1.0)
     B = np.clip(4.0 * (1.0 - norm), 0.0, 1.0)
@@ -121,24 +115,32 @@ except Exception as e:
         return 1
     fi
 
-    # Project the pristine false-color pixel array maps straight into your SSH session window
+    # Handle conditional high-precision timestamp archival copy
+    if [ "$ts_flag" = "1" ]; then
+        # Includes Year-Month-Day_Hour-Minute-Second_Milliseconds for sub-second safety splits
+        local ts_filename="$OUTPUT_DIR/thermal_$(date +%Y%m%d_%H%M%S_%3N).png"
+        cp "$COLOR_PNG" "$ts_filename"
+        info "Archived frame copy safely preserved at: $ts_filename"
+    fi
+
+    # Project false-color grid straight into active terminal session window
     chafa --symbols "$sym" "$COLOR_PNG"
     return 0
 }
 
 usage() {
     echo "⚙️  Turnkey Thermal Subsystem Terminal Controller Engine"
-    echo "Usage: $0 [action: image|loop] [interval_seconds] [chafa_symbols] [device_path]"
+    echo "Usage: $0 [action: image|loop] [interval_seconds] [chafa_symbols] [device_path] [save_timestamp: 0|1]"
     echo ""
     echo "Positional Parameter Configurations:"
     echo "  interval_seconds  : Cycle pause length (Defaults to 2s. Accepts decimals like 0.2)"
     echo "  chafa_symbols     : Render block shapes (block, quad, sex, braille, all. Default: block)"
     echo "  device_path       : Absolute video endpoint node (Auto-resolved if omitted)"
+    echo "  save_timestamp    : Archive image file with precise timestamps (0=Off, 1=On. Default: 0)"
     echo ""
     echo "Production Usage Map Examples:"
-    echo "  sudo $0 image                 <- Standard standalone snap using solid block arrays"
-    echo "  sudo $0 loop 2 quad           <- Monitored stream tracking loops every 2 seconds with quadrants"
-    echo "  sudo $0 loop 0.5 all /dev/video0 <- Ultra-fast structural telemetry mapping sync"
+    echo "  sudo $0 image 0 block /dev/video0 1  <- Snaps a single frame AND saves a timestamped copy"
+    echo "  sudo $0 loop 2 quad /dev/video0 1   <- Activates live view while auto-saving timelapse archives"
     exit 1
 }
 
@@ -150,6 +152,7 @@ ACTION="${1:-image}"
 INTERVAL="${2:-2}"
 SYMBOLS="${3:-block}"
 MANUAL_NODE_ARG="$4"
+SAVE_TIMESTAMP="${5:-0}"
 
 if [ "$ACTION" != "image" ] && [ "$ACTION" != "loop" ]; then
     usage
@@ -166,18 +169,19 @@ mkdir -p "$OUTPUT_DIR"
 case "$ACTION" in
     image)
         info "Snapping singular radiometric thermal frame via [$TARGET_DEVICE] (Glyphs: $SYMBOLS)..."
-        capture_and_render_frame "$TARGET_DEVICE" "$SYMBOLS" || fail "Singular image engine capture crash."
+        capture_and_render_frame "$TARGET_DEVICE" "$SYMBOLS" "$SAVE_TIMESTAMP" || fail "Singular image engine capture crash."
         ;;
         
     loop)
         info "Spawning continuous monitoring loops (Interval: ${INTERVAL}s | Glyphs: $SYMBOLS)..."
+        [ "$SAVE_TIMESTAMP" = "1" ] && warn "Timelapse archival enabled! Writing frames continuously to local storage directory."
         info "To decouple from the live camera stream pipeline, hit [Ctrl + C]."
         sleep 1.5
         
         while true; do
-            clear # Scrub terminal space completely to handle incoming frame placement cleanly
-            echo -e "${GREEN}📡 Live Thermal Engine Matrix | Refresh: ${INTERVAL}s | Node: $TARGET_DEVICE | Cancel: Ctrl+C${NC}"
-            capture_and_render_frame "$TARGET_DEVICE" "$SYMBOLS"
+            clear # Scrub terminal space completely for seamless frame placement
+            echo -e "${GREEN}📡 Live Thermal Engine Matrix | Refresh: ${INTERVAL}s | Node: $TARGET_DEVICE | Archive: $SAVE_TIMESTAMP | Cancel: Ctrl+C${NC}"
+            capture_and_render_frame "$TARGET_DEVICE" "$SYMBOLS" "$SAVE_TIMESTAMP"
             sleep "$INTERVAL"
         done
         ;;
