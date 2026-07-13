@@ -134,6 +134,9 @@ try:
     # Rotate 90 degrees clockwise to make it upright
     thermal_pixels = np.rot90(thermal_pixels, -1)
     
+    # Mirror the image (horizontal flip left-to-right)
+    thermal_pixels = np.fliplr(thermal_pixels)
+    
     p_min, p_max = thermal_pixels.min(), thermal_pixels.max()
     norm = (thermal_pixels - p_min) / (p_max - p_min) if p_max > p_min else np.zeros_like(thermal_pixels)
     
