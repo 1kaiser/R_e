@@ -11,6 +11,8 @@ bash -c "$(wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login
 ```
 ## 🌡️📹 temperature imager setup
 
+For detailed information, compiling instructions, and local installation options, see the [thermal/README.md](thermal/README.md).
+
 ### 📸 Option 1: Standalone Image Capture to CLI (Python/Chafa/Timg)
 Downloads dynamically, snaps a single mirrored frame, saves the raw file + false-color result (`thermal_captures/color_thermal.png`), renders it using `timg`, and cleans up all code files immediately on exit:
 ```bash
@@ -29,22 +31,6 @@ Launches a 25 FPS live thermal stream directly in your terminal with 0% subproce
   rm -f process.wasm live_thermal.js)
 ```
 
-### 📦 Option 3: Install Globally (Permanent Offline Access)
-Download and install the repository files globally to gain offline, instant terminal launcher access:
-```bash
-# Clone the repository
-git clone https://github.com/1kaiser/R_e.git /tmp/R_e_install
-
-# Install the subfolder package globally
-sudo npm install -g /tmp/R_e_install/thermal
-
-# Clean up installer folder
-rm -rf /tmp/R_e_install
-```
-Once installed, launch the live stream instantly from anywhere in your shell by running:
-```bash
-sudo live-thermal
-```
 
 ## 🧪 SHT4x_Trinkey 
 <details>
