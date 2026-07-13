@@ -128,23 +128,41 @@ try:
     
     matrix = raw_stream[:height*width].reshape((height, width))
     
-    # Slice off metadata rows depending on the mode
-    if height == 196:
-        thermal_pixels = matrix[:192, :].astype(float)
-    elif height == 344:
-        thermal_pixels = matrix[:320, :].astype(float)
-    else:
-        thermal_pixels = matrix[:(height - height % 8), :].astype(float)
+    # Active thermal image is always the first 192 rows (filter out metadata)
+    thermal_pixels = matrix[:192, :].astype(float)
+    
+    # Rotate 90 degrees clockwise to make it upright
+    thermal_pixels = np.rot90(thermal_pixels, -1)
     
     p_min, p_max = thermal_pixels.min(), thermal_pixels.max()
     norm = (thermal_pixels - p_min) / (p_max - p_min) if p_max > p_min else np.zeros_like(thermal_pixels)
-        
-    R = np.clip(1.5 * norm, 0.0, 1.0)
-    G = np.clip(2.0 * norm - 0.5, 0.0, 1.0)
-    B = np.clip(4.0 * (1.0 - norm), 0.0, 1.0)
     
-    rgb_canvas = (np.dstack((R, G, B)) * 255.0).astype(np.uint8)
-    Image.fromarray(rgb_canvas, mode='RGB').save('$COLOR_PNG')
+    # Professional Ironbow Colormap LUT
+    anchors = [
+        (0.00, (0, 0, 10)),
+        (0.15, (20, 0, 90)),
+        (0.30, (90, 0, 120)),
+        (0.45, (180, 0, 100)),
+        (0.60, (230, 60, 20)),
+        (0.75, (250, 150, 0)),
+        (0.90, (250, 220, 100)),
+        (1.00, (255, 255, 255))
+    ]
+    lut = np.zeros((256, 3), dtype=np.uint8)
+    for i in range(256):
+        val = i / 255.0
+        for k in range(len(anchors) - 1):
+            x0, c0 = anchors[k]
+            x1, c1 = anchors[k+1]
+            if x0 <= val <= x1:
+                t = (val - x0) / (x1 - x0)
+                lut[i] = [int(c0[j] + t * (c1[j] - c0[j])) for j in range(3)]
+                break
+                
+    indices = (norm * 255.0).astype(np.uint8)
+    rgb = lut[indices]
+    
+    Image.fromarray(rgb, mode='RGB').save('$COLOR_PNG')
 except Exception as e:
     print(f'Engine Failure: {e}', file=sys.stderr)
     sys.exit(1)
