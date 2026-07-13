@@ -10,26 +10,42 @@ Flash ☄️ execution/running
 bash -c "$(wget https://raw.githubusercontent.com/1kaiser/R_e/main/prepare_login.sh && chmod +x prepare_login.sh && ./prepare_login.sh local_ip username 'password' login_id login_password)"
 ```
 ## 🌡️📹 temperature imager setup
+
+### 📸 Option 1: Standalone Image Capture to CLI (Python/Chafa/Timg)
+Downloads dynamically, snaps a single mirrored frame, saves the raw file + false-color result (`thermal_captures/color_thermal.png`), renders it using `timg`, and cleans up all code files immediately on exit:
 ```bash
-# 📸 OPTION 1: Standalone Image Capture to CLI
-# Format: ...temp_cam.sh)" _ image [chafa_symbols] [device_path]
-
-# Auto-detect camera and render single frame using solid square block matrices
-sudo bash -c "$(wget -qO- [https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh](https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh))" _ image block
-
-# Target a specific device node path using high-density quadrant symbols
-sudo bash -c "$(wget -qO- [https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh](https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh))" _ image quad /dev/video0
-
-
-# 📡 OPTION 2: Real-Time Terminal Monitor Stream Loops
-# Format: ...temp_cam.sh)" _ loop [interval_seconds] [chafa_symbols] [device_path]
-
-# Stream live updates every 2 seconds via auto-detected hardware node
-sudo bash -c "$(wget -qO- [https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh](https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh))" _ loop 2 quad
-
-# Ultra-fast structural telemetry tracking refresh every 0.5 seconds with all symbols active
-sudo bash -c "$(wget -qO- [https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh](https://raw.githubusercontent.com/1kaiser/R_e/main/temp_cam.sh))" _ loop 0.5 all /dev/video0
+sudo bash -c "$(wget -qO- \
+  https://raw.githubusercontent.com/1kaiser/R_e/main/thermal/temp_cam.sh)" \
+  _ image 0 timg
 ```
+
+### 📡 Option 2: High-Performance Live Mirror Stream (Node.js/WASM)
+Launches a 25 FPS live thermal stream directly in your terminal with 0% subprocess startup overhead. Compiles and processes rotation, horizontal mirroring, and professional Ironbow LUT color mapping inside WebAssembly. Cleans up all files from disk automatically upon exit:
+```bash
+(cd /tmp && \
+  wget -q https://raw.githubusercontent.com/1kaiser/R_e/main/thermal/process.wasm && \
+  wget -q https://raw.githubusercontent.com/1kaiser/R_e/main/thermal/live_thermal.js && \
+  chmod +x live_thermal.js && sudo ./live_thermal.js; \
+  rm -f process.wasm live_thermal.js)
+```
+
+### 📦 Option 3: Install Globally (Permanent Offline Access)
+Download and install the repository files globally to gain offline, instant terminal launcher access:
+```bash
+# Clone the repository
+git clone https://github.com/1kaiser/R_e.git /tmp/R_e_install
+
+# Install the subfolder package globally
+sudo npm install -g /tmp/R_e_install/thermal
+
+# Clean up installer folder
+rm -rf /tmp/R_e_install
+```
+Once installed, launch the live stream instantly from anywhere in your shell by running:
+```bash
+sudo live-thermal
+```
+
 ## 🧪 SHT4x_Trinkey 
 <details>
 <summary><b>📱 How to run on Android (Termux) - No Root Required</b></summary>
