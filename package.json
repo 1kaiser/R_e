@@ -1,0 +1,14 @@
+{
+  "name": "live-thermal",
+  "version": "1.0.0",
+  "description": "Live Terminal Thermal Camera Stream using WebAssembly",
+  "main": "live_thermal.js",
+  "bin": {
+    "live-thermal": "./live_thermal.js"
+  },
+  "scripts": {
+    "start": "node live_thermal.js"
+  },
+  "dependencies": {},
+  "private": true
+}
