@@ -27,7 +27,7 @@ Launches a 25 FPS live thermal stream directly in your terminal with 0% subproce
 (cd /tmp && \
   wget -q https://raw.githubusercontent.com/1kaiser/R_e/main/thermal/process.wasm && \
   wget -q https://raw.githubusercontent.com/1kaiser/R_e/main/thermal/live_thermal.js && \
-  chmod +x live_thermal.js && sudo ./live_thermal.js; \
+  chmod +x live_thermal.js && sudo $(which node) ./live_thermal.js; \
   rm -f process.wasm live_thermal.js)
 ```
 
