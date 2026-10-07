@@ -114,38 +114,75 @@ printf "  %-50s" "Generating offline scripts"
 # Create FireLogin.js (formatted)
 cat << 'EOF' > "$BUNDLE_DIR/$PROJECT_DIR/$SCRIPT_NAME"
 const puppeteer = require('puppeteer');
+
 async function FireLogin(userId, password) {
     const executablePath = process.env.CHROME_PATH;
-    if (!executablePath) { console.error('FATAL: CHROME_PATH environment variable not set.'); process.exit(1); }
+    if (!executablePath) {
+        console.error('FATAL: CHROME_PATH environment variable not set.');
+        process.exit(1);
+    }
     console.log(`Launching browser from local path: ${executablePath}`);
+    const isHeadless = process.env.HEADLESS !== 'false';
     const browser = await puppeteer.launch({
-        headless: false, executablePath: executablePath, ignoreHTTPSErrors: true,
-        args: ['--incognito', '--ignore-certificate-errors', '--no-sandbox', '--disable-setuid-sandbox']
+        headless: isHeadless,
+        executablePath: executablePath,
+        ignoreHTTPSErrors: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--ignore-certificate-errors'
+        ]
     });
     const page = (await browser.pages())[0];
     try {
-        // --- IMPORTANT: You must change this URL to your actual target login page ---
-        console.log('Navigating...');
-        await page.goto('http://www.gstatic.com/generate_204', { waitUntil: 'networkidle0' });
+        console.log('Navigating to portal detection URL...');
+        try {
+            await page.goto('http://detectportal.firefox.com/canonical.html', { waitUntil: 'networkidle2', timeout: 15000 });
+        } catch (e) {
+            console.log('Portal detection redirect note:', e.message);
+        }
 
-        console.log('Entering credentials...');
-        // --- IMPORTANT: You must change these selectors to match your login page ---
-        await page.waitForSelector('#ft_un', { timeout: 10000 });
-        await page.type('#ft_un', userId, { delay: 100 });
-        await page.waitForSelector('#ft_pd');
-        await page.type('#ft_pd', password, { delay: 100 });
-        await page.waitForSelector('input[type="submit"]');
-        await page.click('input[type="submit"]');
-        
-        console.log('Login complete. Browser will remain open.');
-        console.log('--> Manually close browser and press Ctrl+C to end script. <---');
+        console.log('Current page URL:', page.url());
+
+        // Wait for username selector (support 24online #username and legacy Fortinet #ft_un)
+        console.log('Waiting for username selector...');
+        const userSelector = await page.waitForSelector('#username, input[name="username"], #ft_un', { timeout: 15000 });
+        await userSelector.click({ clickCount: 3 });
+        await userSelector.type(userId, { delay: 50 });
+
+        console.log('Waiting for password selector...');
+        const passSelector = await page.waitForSelector('input[name="password"], #ft_pd', { timeout: 5000 });
+        await passSelector.click({ clickCount: 3 });
+        await passSelector.type(password, { delay: 50 });
+
+        console.log('Waiting for submit button...');
+        const submitBtn = await page.waitForSelector('#loginbtn, button[name="login"], button[type="submit"], input[type="submit"]', { timeout: 5000 });
+        console.log('Submitting credentials...');
+
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(e => console.log('Navigation note:', e.message)),
+            submitBtn.click()
+        ]);
+
+        console.log('Post-login URL:', page.url());
+        const pageTitle = await page.title();
+        console.log('Post-login Page Title:', pageTitle);
+
+        console.log('Login complete. Closing browser.');
+        await browser.close();
+        process.exit(0);
     } catch (error) {
         console.error('An error occurred during login:', error);
         await browser.close();
         process.exit(1);
     }
 }
-if (process.argv.length < 4) { console.error('Usage: node FireLogin.js <userId> <password>'); process.exit(1); }
+
+if (process.argv.length < 4) {
+    console.error('Usage: node FireLogin.js <userId> <password>');
+    process.exit(1);
+}
+
 FireLogin(process.argv[2], process.argv[3]);
 EOF
 # Create offline_setup.sh (formatted)
@@ -173,8 +210,13 @@ fi
 CHROME_EXECUTABLE_PATH="\$(pwd)/\$CHROME_DIR/usr/bin/chromium"
 echo "Local Chromium path is: \$CHROME_EXECUTABLE_PATH"
 echo "--- Running Login Script ---"
+if [ -n "\$DISPLAY" ]; then
+    export DISPLAY="\$DISPLAY"
+else
+    export DISPLAY=:0
+fi
 export CHROME_PATH="\$CHROME_EXECUTABLE_PATH"
-export DISPLAY=:0 && node $SCRIPT_NAME \$1 \$2
+node $SCRIPT_NAME \$1 \$2
 echo "--- Script has finished. ---"
 EOF
 chmod +x "$BUNDLE_DIR/offline_setup.sh"
